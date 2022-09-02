@@ -1,6 +1,7 @@
 const User = require('./../models/userModel');
 const catchAsync = require("./../utils/catchAsync")
 const AppError = require("./../utils/appErrors")
+const factory = require("./handleFactory")
 
 
 const filterObj = (obj , ...allowedFields) => {
@@ -13,16 +14,15 @@ const filterObj = (obj , ...allowedFields) => {
     return newObj
 }
 
+exports.getMe = (req , res , next) => {
+    req.params.id = req.user.id
+    next()
+}
 
-exports.getALLUsers = catchAsync(async (req , res , next) => {
-    const users = await User.find();
-    res.status(200).json({
-        userLength : users.length,
-        data : {
-            users
-        }
-    })
-})
+exports.getALLUsers = factory.getAll(User)
+
+
+exports.getUser = factory.getOne(User)
 
 
 exports.deleteAllUsers = catchAsync(async(req , res, next) => {
@@ -36,7 +36,7 @@ exports.deleteAllUsers = catchAsync(async(req , res, next) => {
 
 exports.updateMe = catchAsync(async (req , res , next) => {
     if(req.body.password || req.body.passwordconfirm){
-        return next(new AppError("this route " , 400))
+        return next(new AppError("this route is not oragnize for passwords " , 400))
     }
     const filteredBody = filterObj(req.body , "name" , "email")
     const updatedUser = await User.findByIdAndUpdate(req.user.id , filteredBody , {
@@ -51,9 +51,14 @@ exports.updateMe = catchAsync(async (req , res , next) => {
 })
 
 
+exports.updateUser = factory.updateOne(User)
+
 exports.deleteMe = catchAsync(async (req ,res ,next) => {
     await User.findByIdAndUpdate(req.user.id , {active : false})
     res.status(201).json({
         data : null
     })
 })
+
+
+exports.deleteOne = factory.deleteOne(User)

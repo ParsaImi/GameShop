@@ -45,6 +45,19 @@ exports.login = catchAsync(async (req , res , next) => {
    createAndSendToken(user , 200, res)
 })
 
+
+exports.logout = (req , res) => {
+    res.cookie('jwt' , 'loggedout' , {
+        expires : new Date(Date.now() + 10000),
+        httpOnly : true
+    })
+    res.status(200).json({
+        status : 'success'
+    })
+}
+
+
+
 exports.protect = catchAsync(async(req ,res ,next) => {
 
     let token;
@@ -53,6 +66,8 @@ exports.protect = catchAsync(async(req ,res ,next) => {
 
         token = req.headers.authorization.split(" ")[1]
         
+    }else if(req.cookies.jwt){
+        token = req.cookies.jwt
     }
 
     if(!token){
@@ -78,16 +93,71 @@ exports.protect = catchAsync(async(req ,res ,next) => {
     }
 
     req.user = freshUser
+    res.locals.user = freshUser
     next()
 
 })
 
-exports.restrictTo = (req ,res ,next) => {
-    userRole = req.user.role;
-    if(userRole === "admin"){
+
+
+
+
+
+
+exports.isLoggedIn = async(req ,res ,next) => {
+
+    if(req.cookies.jwt){
+        try{
+    
+        //verify token
+        const decoded = await promisify(jwt.verify)(req.cookies.jwt , process.env.JWT_SECRET)
+    
+    
+        const freshUser = await User.findById(decoded.id)
+    
+        if(!freshUser){
+            return next()
+        }
+    
+        // check the user for changing password
+    
+    
+        if(freshUser.changedPasswordAfter(decoded.iat)){
+            return next()
+        }
+        req.user = freshUser
+        res.locals.user = freshUser
+        return next()
+    }catch(err){
         return next()
     }
-    return next(new AppError("only admin can acess to this route" , 403))
+}
+    next()
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+exports.restrictTo = (...roles) => {
+    return (req , res , next) => {
+        if(!roles.includes(req.user.role)){
+            return next(new AppError("You dont have perm to this action" , 403))
+        }
+        next()
+    }
 }
 
 exports.forgetPassword = catchAsync(async (req , res , next) => {

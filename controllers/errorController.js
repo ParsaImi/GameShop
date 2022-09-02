@@ -33,40 +33,87 @@ module.exports = (err , req ,res , next) => {
 
     //functions
 
-const sendingErrorProd = (err , res) => {
+
+
+
+
+
+
+
+
+const sendingErrorProd = (err ,req ,  res) => {
+    if(req.originalUrl.startsWith('/api')) {
     if(err.isOperational){
-    res.status(err.statusCode).json({
+    return res.status(err.statusCode).json({
         status : err.status,
         message : err.message,
     })
-}else{
-    res.status(500).json({
+}
+    return res.status(500).json({
         status : "error",
         message : "someThing in server went wrong"
     })
-}
-}
+    }
 
-const sendingErrorDev = (err , res) => {
-    res.status(err.statusCode).json({
-        statusCode : err.statusCode,
-        error : err,
-        status : err.status,
-        message : err.message,
+
+        if(err.isOperational){
+            return res.status(err.statusCode).render('error' , {
+                title : 'somthing went wronggggg',
+                msg : err.message
+            })
+        }
+            return res.status(500).render('error' , {
+                title : 'somthing went wrong',
+                msg : "try again"
+            })
+        
+
+
+
+
+
+
     
-    })
+}
+
+
+
+
+
+
+
+const sendingErrorDev = (err ,req, res) => {
+    if(req.originalUrl.startsWith('/api')) {
+
+        return res.status(err.statusCode).json({
+            statusCode : err.statusCode,
+            error : err,
+            status : err.status,
+            message : err.message,
+        
+        })
+    }
+        // rendered website
+        res.status(err.statusCode).render('error' , {
+            title : err.message,
+            msg : err.message
+        })
 
 }
+
+
+
+
 
 //end of functions
 
 
     if(process.env.NODE_ENV === "development"){
-        sendingErrorDev(err , res)
+        sendingErrorDev(err ,req , res)
 
     }else if(process.env.NODE_ENV === "production"){
-        console.log(err.name);
         let error = {...err}
+        error.message = err.message
         if(err.name === "CastError"){
             error =  handleCastErrorDB(err)
         }
@@ -83,7 +130,7 @@ const sendingErrorDev = (err , res) => {
         if(err.name === "TokenExpiredError"){
             error === handleTokenExpiredError(err)
         }
-        sendingErrorProd(error , res)
+        sendingErrorProd(error , req , res)
     }
 
     next()

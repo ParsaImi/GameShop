@@ -1,0 +1,19 @@
+header.header
+  nav.nav.nav--tours
+    a.nav__el(href='/') All tours
+  .header
+    img(src='/img/logo-white.png' alt='gameShopLogo')
+  nav.nav.nav--user 
+    //- a.nav__el(href='#') booking
+    //- a.nav__el(href='#')
+    //-   img.nav__user-img(src='img/iser.jpg' alt='User Photo')
+      span jonas
+
+    if user
+      a.nav__el.nav__el--logout Log Out
+      a.nav__el(href='/me')
+        img.nav__user-img(src=`img/users/user-1.jpg` alt=`User Photo Of ${user.name}`)
+        //- span= user.name.split(' ')[0]
+    else
+      a.nav__el(href='/login') log in
+      a.nav__el.nav__el--cta(href='#') Sign up

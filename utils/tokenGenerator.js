@@ -16,6 +16,7 @@ function createAndSendToken(user , status , res){
 
     res.cookie("jwt" , token , cookieOptions)
     res.status(status).json({
+        status : "success",
         token,
         data : {
             user

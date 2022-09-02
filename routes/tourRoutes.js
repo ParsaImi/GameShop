@@ -8,6 +8,7 @@ app.use(express.json())
 
 const router = express.Router()
 
+const reviewRoutes = require("./reviewRoutes")
 const tourController = require('../controllers/tourController')
 const  authController = require('./../controllers/authController')
 
@@ -29,15 +30,25 @@ router
 
 router
 .route('/monthly-plan/:year')
-.get(tourController.getMonthlyPlan)
+.get(authController.protect , authController.restrictTo("admin")  , tourController.getMonthlyPlan)
+
+router.route("/tours-within/:distance/center/:latlng/unit/:unit" )
+.get(tourController.getToursWithin)
+
+
+router.route("/distance/:latlng/unit/:unit")
+.get(tourController.getTourDistance)
 
 router.route("/")
-.get( authController.protect ,tourController.getAllTours)
-.post( tourController.checkBody , tourController.createNewTour)
+.get(tourController.getAllTours)
+.post( authController.protect , authController.restrictTo("admin") , tourController.createNewTour)
 
 router.route('/:id')
 .get(tourController.getOneTour)
-.patch(tourController.updateTour)
+.patch(authController.protect , authController.restrictTo("admin") , tourController.updateTour)
+.delete(authController.protect , authController.restrictTo("admin")  , tourController.deleteTour)
+
+router.use("/:tourId/reviews" , reviewRoutes)
 // .delete( authController.protect , authController.restrictTo ,tourController.deleteTour)
 
 
